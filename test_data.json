@@ -1,7 +1,7 @@
 {
   "creator": "Dr_Monkfish",
   "creation_date": "today",
-  "members": [],
+  "members": [235054381060456450],
   "completed": [],
   "serverID": 4387987094,
   "todoList": [
@@ -9,5 +9,6 @@
     "Go to gym",
     "Make killer App"
   ],
-  "todoListName": "Testing ToDo List 5000"
+  "todoListName": "The List",
+  "messageID": ""
 }
