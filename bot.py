@@ -115,19 +115,6 @@ async def add_item(ctx: discord.ext.commands.Context, list_name, *, new_item):
     await ctx.message.add_reaction('✅')
 
 
-@bot.command(name="add2", help="Add new item to list. Separate list name with |")
-async def add_item(ctx: discord.ext.commands.Context, *, the_input):
-    array = the_input.split("|")
-    list_name = array[0].strip()
-    new_item = array[1].strip()
-    the_list = get_list_by_name(list_name)
-    if the_list is None:
-        await ctx.send("⚠No list by that name ⚠")
-        return
-    the_list.add_item(new_item)
-    await ctx.message.add_reaction('✅')
-
-
 # ----Events-----
 
 # Listens for emoji reactions
