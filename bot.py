@@ -4,6 +4,70 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from todo_list import *
 
+<<<<<<< Updated upstream
+=======
+import pyrebase
+
+load_dotenv()
+
+config = {
+    "apiKey": os.getenv("FBASE_APIKEY"),
+    "databaseURL": os.getenv("FBASE_DATABASEURL"),
+    "authDomain": os.getenv("FBASE_AUTHDOMAIN"),
+    "projectId": os.getenv("FBASE_PROJECTID"),
+    "storageBucket": os.getenv("FBASE_STORAGEBUCKET"),
+    "messagingSenderId": os.getenv("FBASE_MESSAGINGSENDERID"),
+    "appId": os.getenv("FBASE_APPID"),
+    "measurementId": os.getenv("FBASE_MEASUREMENTID")
+}
+
+
+def is_unique_list(list_name):
+    print(list(db.child("todoLists").get().val().keys()))
+    return list_name not in list(db.child("todoLists").get().val().keys())
+
+
+firebase = pyrebase.initialize_app(config)
+db = firebase.database()
+
+
+def create_list(list_name, author_id):
+    data = {
+        "creator": author_id,
+        "members": [author_id],
+        "message_id": ""
+    }
+    db.child("todoLists").child(list_name).set(data)
+    db.child("members").child(author_id).child("todoLists").set(list_name)
+    return db.child("todoLists").child(list_name).get().val()
+
+
+def get_list_by_name(list_name):
+    ret = db.child("todoLists").child(list_name).get()
+    return ret.key(), ret.val()
+
+
+def get_list_by_message_id(message_id):
+    lists = db.child("todoLists").get().val()
+    for key, val in lists.items():
+        if val["message_id"] == message_id:
+            return key, val
+    return None
+
+
+def set_message_id(list_name, message_id):
+    return db.child("todoLists").child(list_name).update({"message_id": message_id})
+
+
+def get_all_list_names_by_user(author_id):
+    return db.child("members").child(author_id).get().val()
+
+
+def update_list(list_name, the_list):
+    return db.child("todoLists").child(list_name).update(the_list)
+
+
+>>>>>>> Stashed changes
 # Setup Stuff
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -88,8 +152,17 @@ async def show_list(ctx: discord.ext.commands.Context, *, list_name):
     if the_list is None:
         await ctx.send("⚠No list by that name ⚠")
         return
+<<<<<<< Updated upstream
     if the_list.is_user_member(user_id):
         output = make_output_list(the_list.get_todo_list(), the_list.get_todo_list_name())
+=======
+    if user_id in the_list["members"]:  # if user_id in get_list_by_name("list_name")["members"]
+        if "todoList" not in the_list:
+            await ctx.send("Add some shit")
+            return
+
+        output = make_output_list(the_list["todoList"], list_name)
+>>>>>>> Stashed changes
         the_message = await ctx.send("\n".join(output))
         the_list.set_message_id(the_message.id)
         await add_emojis(the_message, the_list.get_todo_list())
@@ -99,8 +172,19 @@ async def show_list(ctx: discord.ext.commands.Context, *, list_name):
 
 # Show list of Completed Items
 @bot.command(name="showcomplete", help="Display all completed items ")
+<<<<<<< Updated upstream
 async def show_complete(ctx: discord.ext.commands.Context):
     output = make_output_list(test_data.get_completed(), test_data.get_todo_list_name(), "--Completed")
+=======
+async def show_complete(ctx: discord.ext.commands.Context, list_name):
+    _list_name, the_list = get_list_by_name(list_name)
+
+    if "completed" not in the_list:
+        await ctx.send("You haven't done shit")
+        return
+
+    output = make_output_list(the_list["completed"], list_name, "--Completed")
+>>>>>>> Stashed changes
     await ctx.send("\n".join(output))
 
 
