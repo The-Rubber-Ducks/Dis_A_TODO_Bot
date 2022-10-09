@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from todo_list import *
+import pyrebase
 
 # Setup Stuff
 load_dotenv()
@@ -11,9 +12,26 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+config = {
+  "apiKey": os.getenv("FBASE_APIKEY"),
+  "databaseURL": os.getenv("FBASE_DATABASEURL"),
+  "authDomain": os.getenv("FBASE_AUTHDOMAIN"),
+  "projectId": os.getenv("FBASE_PROJECTID"),
+  "storageBucket": os.getenv("FBASE_STORAGEBUCKET"),
+  "messagingSenderId": os.getenv("FBASE_MESSAGINGSENDERID"),
+  "appId": os.getenv("FBASE_APPID"),
+  "measurementId": os.getenv("FBASE_MEASUREMENTID")
+}
+
+
+firebase = pyrebase.initialize_app(config)
+db = firebase.database()
+
+
 emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
 
 all_lists = []
+
 
 test_data = Todo_List("Test_List", "Me")
 test_data.load_JSON(open("./test_data.json"))
@@ -88,7 +106,7 @@ async def show_list(ctx: discord.ext.commands.Context, *, list_name):
     if the_list is None:
         await ctx.send("⚠No list by that name ⚠")
         return
-    if the_list.is_user_member(user_id):
+    if the_list.is_user_member(user_id): # if user_id in get_list_by_name("list_name")["members"]
         output = make_output_list(the_list.get_todo_list(), the_list.get_todo_list_name())
         the_message = await ctx.send("\n".join(output))
         the_list.set_message_id(the_message.id)
