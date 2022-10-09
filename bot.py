@@ -2,7 +2,6 @@ import discord
 import os
 from dotenv import load_dotenv
 from discord.ext import commands
-from todo_list import *
 import pyrebase
 
 load_dotenv()
@@ -73,20 +72,25 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
 
-all_lists = []
-
-test_data = Todo_List("Test_List", "Me")
-test_data.load_JSON(open("./test_data.json"))
-all_lists.append(test_data)
-
 
 # -----Helper functions-----
 
-def make_output_list(the_list, list_title, extra=""):
-    output = [f"__**{list_title}{extra}**__"]
-    for index, item in enumerate(the_list):
-        output.append(f"**{index + 1}.** {item}")
-    return output
+def make_output_list(the_list, list_title):
+    if len(the_list) > 0:
+        output = [f"__**{list_title}**__"]
+        for index, item in enumerate(the_list):
+            output.append(f"**{index + 1}.** {item}")
+        return output
+    return ["All done!"]
+
+
+def make_completed_list(the_list):
+    if len(the_list) > 0:
+        output = [f"__**Completed**__"]
+        for index, item in enumerate(the_list):
+            output.append(f"~~{item}~~")
+        return output
+    return []
 
 
 async def add_emojis(the_message, the_list):
@@ -111,10 +115,24 @@ async def make_new_list(ctx: discord.ext.commands.Context, permission, *, list_n
     await ctx.message.add_reaction('✅')
 
 
+@bot.command(name="removelist", help="Removes list by name")
+async def remove_list(ctx: discord.ext.commands.Context, *, list_name):
+    user_id = ctx.author.id
+    _list_name, the_list = get_list_by_name(list_name)
+    if the_list is None:
+        await ctx.send("⚠No list by that name ⚠")
+        return
+    if user_id in the_list["members"]:
+        await ctx.send("Add function to delete this list!")
+        await ctx.message.add_reaction('✅')
+    #     Add function stuff here
+    else:
+        await ctx.send("⛔You are not a member of this list.⛔")
+
+
 # Show users lists
 @bot.command(name="mylists", help="Display ToDo lists for specific user")
 async def show_my_lists(ctx: discord.ext.commands.Context):
-    print(ctx.author.id)
     user_lists_names = get_all_list_names_by_user(ctx.author.id)
     print(user_lists_names)
     if len(user_lists_names) > 0:
@@ -127,7 +145,7 @@ async def show_my_lists(ctx: discord.ext.commands.Context):
 @bot.command(name="showlist", help="Display a ToDo list in chat")
 async def show_list(ctx: discord.ext.commands.Context, *, list_name):
     user_id = ctx.author.id
-    list_name, the_list = get_list_by_name(list_name)
+    _list_name, the_list = get_list_by_name(list_name)
     if the_list is None:
         await ctx.send("⚠No list by that name ⚠")
         return
@@ -136,7 +154,11 @@ async def show_list(ctx: discord.ext.commands.Context, *, list_name):
             await ctx.send("Add some shit")
             return
 
-        output = make_output_list(the_list["todoList"], list_name)
+        todo_output = make_output_list(the_list["todoList"], list_name)
+        if "completed" not in the_list:
+            the_list["completed"] = []
+        completed_output = make_completed_list(the_list["completed"])
+        output = todo_output + completed_output
         the_message = await ctx.send("\n".join(output))
         the_list["message_id"] = the_message.id
         update_list(list_name, the_list)
@@ -154,7 +176,7 @@ async def show_complete(ctx: discord.ext.commands.Context, list_name):
         await ctx.send("You haven't done shit")
         return
 
-    output = make_output_list(the_list["completed"], list_name, "--Completed")
+    output = make_output_list(the_list["completed"], list_name)
     await ctx.send("\n".join(output))
 
 
@@ -184,6 +206,7 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.Member):
         return
     list_name, the_list = get_list_by_message_id(reaction.message.id)
     if user.id not in the_list["members"]:
+        await reaction.message.remove_reaction(reaction.emoji, user)
         return
 
     if "todoList" not in the_list:
@@ -204,7 +227,7 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.Member):
     update_list(list_name, the_list)
 
     todo_output = make_output_list(the_list["todoList"], list_name)
-    completed_output = make_output_list(the_list["completed"], list_name, "COMPLETE")
+    completed_output = make_completed_list(the_list["completed"])
     output = todo_output + completed_output
     await reaction.message.edit(content="\n".join(output))
     await reaction.message.clear_reactions()
