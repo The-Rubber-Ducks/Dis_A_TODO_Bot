@@ -65,6 +65,10 @@ Bot responds with checkbox emoji to verify new ToDo item was added to list:
 
 ![](https://i.imgur.com/NUrZcP4.png)
 
+User can only add up to and including 10 items max:
+
+![](https://i.imgur.com/f7VW6Va.png)
+
 ---
 
 ### Feature: User wants to see items on their ToDo list
@@ -79,6 +83,10 @@ Bot responds with ToDo list if tasks available or already completed:
 Bot responds with following if the list is fresh  with no tasks completed or available:
 
 ![](https://i.imgur.com/ogXfnET.png)
+
+Bot responds with the following if user does not have permission to see someone else's list:
+
+![](https://i.imgur.com/cmDiPL0.png)
 
 ---
 

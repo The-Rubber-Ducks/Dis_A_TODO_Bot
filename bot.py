@@ -98,7 +98,7 @@ async def add_yes_no_emojis(the_message):
 # -----Commands-----
 
 # Create new list
-@bot.command(name="makelist", help="Make a new ToDo list")
+@bot.command(name="makelist", help="Make a new ToDo list. Use quotations around list name.")
 async def make_new_list(ctx: discord.ext.commands.Context, permission, *, list_name=None):
     """Bot command that creates a new ToDo list and adds it to the database
 
@@ -107,16 +107,22 @@ async def make_new_list(ctx: discord.ext.commands.Context, permission, *, list_n
         permission(String): The permission of the new list. 'all' = public
         list_name(String): The name of the new list
     """
+    check_quotations = {'"', "'"}
     if list_name is None:
         list_name = permission
+
         if not firebase_funcs.is_unique_list(db, list_name, ctx.guild.id):
-            await ctx.send("List name already in use")
+            await ctx.send("⚠ List name already in use ⚠")
             return
         new_list = firebase_funcs.create_list(db, list_name, ctx.author.id, ctx.guild.id)
 
     elif permission == "all":
+        if list_name[0] not in check_quotations or list_name[-1] not in check_quotations:
+            await ctx.send("⚠ Use quotation marks around list name. ⚠")
+            return
+        list_name = list_name.strip("'").strip('"')
         if not firebase_funcs.is_unique_list(db, list_name, ctx.guild.id):
-            await ctx.send("List name already in use")
+            await ctx.send("⚠ List name already in use ⚠")
             return
         new_list = firebase_funcs.create_list(db, list_name, ctx.author.id, ctx.guild.id, True)
         
@@ -126,7 +132,7 @@ async def make_new_list(ctx: discord.ext.commands.Context, permission, *, list_n
         
     else:
         await ctx.send("""
-            ⚠Invalid command used to make list.⚠
+            ⚠Invalid command used to make list. Please use quotation marks around list names.⚠
             ```!makelist all NAME``` For a server-wide todo list
             ```!makelist NAME``` For a personal to do list
             """)
@@ -191,7 +197,9 @@ async def show_list(ctx: discord.ext.commands.Context, *, list_name=None):
     if list_name is None:
         await ctx.send("""
             ⚠Invalid command used to show list.⚠
-            ```!showlist NAME``` To show your list
+
+            To show your list:
+            ```!showlist NAME``` 
             """)
         return
 
@@ -230,18 +238,22 @@ async def add_item(ctx: discord.ext.commands.Context, list_name, *, new_item):
         new_item(String): The new item that will be added to the list
     """
     _list_name, the_list = firebase_funcs.get_list_by_name(db, list_name, ctx.guild.id)
-
+        
     if _list_name is None and the_list is None:
         return
     
     if the_list is None:
         await ctx.send("⚠No list by that name ⚠")
         return
+    
+    if ctx.author.id not in the_list["members"]:
+        await ctx.send("⛔You are not a member of this list.⛔")
+        return
 
     if "todoList" not in the_list:
         the_list["todoList"] = [new_item]
     elif len(the_list["todoList"]) >= 10:
-        await ctx.send("Max items reached. 10/10 Be more productive.")
+        await ctx.send("10/10 items reached. Be more productive.")
         return
     else:
         the_list["todoList"].append(new_item)
@@ -316,7 +328,7 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.Member):
 
         todo_output = make_output_list(the_list["todoList"], list_name)
         completed_output = make_completed_list(the_list["completed"])
-        output = todo_output + completed_output
+        output = todo_output + ["\n"] + completed_output
         await reaction.message.edit(content="\n".join(output))
         await reaction.message.clear_reactions()
         await add_emojis(reaction.message, the_list["todoList"])
