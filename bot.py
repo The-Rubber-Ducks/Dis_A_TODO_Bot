@@ -15,6 +15,7 @@ emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7�
 
 all_lists = []
 
+
 test_data = Todo_List("Test_List", "Me")
 test_data.load_JSON(open("./test_data.json"))
 all_lists.append(test_data)
@@ -88,7 +89,7 @@ async def show_list(ctx: discord.ext.commands.Context, *, list_name):
     if the_list is None:
         await ctx.send("⚠No list by that name ⚠")
         return
-    if the_list.is_user_member(user_id):
+    if the_list.is_user_member(user_id): # if user_id in get_list_by_name("list_name")["members"]
         output = make_output_list(the_list.get_todo_list(), the_list.get_todo_list_name())
         the_message = await ctx.send("\n".join(output))
         the_list.set_message_id(the_message.id)
