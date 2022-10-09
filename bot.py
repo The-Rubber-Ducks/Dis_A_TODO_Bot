@@ -63,64 +63,6 @@ def update_list(list_name, the_list):
     return db.child("todoLists").child(list_name).update(the_list)
 
 
-import pyrebase
-
-load_dotenv()
-
-config = {
-  "apiKey": os.getenv("FBASE_APIKEY"),
-  "databaseURL": os.getenv("FBASE_DATABASEURL"),
-  "authDomain": os.getenv("FBASE_AUTHDOMAIN"),
-  "projectId": os.getenv("FBASE_PROJECTID"),
-  "storageBucket": os.getenv("FBASE_STORAGEBUCKET"),
-  "messagingSenderId": os.getenv("FBASE_MESSAGINGSENDERID"),
-  "appId": os.getenv("FBASE_APPID"),
-  "measurementId": os.getenv("FBASE_MEASUREMENTID")
-}
-
-def is_unique_list(list_name):
-    print(list(db.child("todoLists").get().val().keys()))
-    return list_name not in list(db.child("todoLists").get().val().keys())
-
-
-firebase = pyrebase.initialize_app(config)
-db = firebase.database()
-
-def create_list(list_name, author_id):
-    data = {
-        "creator": author_id,
-        "members": [author_id],
-        "message_id": ""
-    }
-    db.child("todoLists").child(list_name).set(data)
-    db.child("members").child(author_id).child("todoLists").set(list_name)
-    return db.child("todoLists").child(list_name).get().val()
-
-
-def get_list_by_name(list_name):
-    ret = db.child("todoLists").child(list_name).get()
-    return (ret.key(), ret.val())
-
-
-def get_list_by_message_id(message_id):
-    lists = db.child("todoLists").get().val()
-    for key, val in lists.items():
-        if val["message_id"] == message_id:
-            return (key, val)
-    return None
-
-
-def set_message_id(list_name, message_id):
-    return db.child("todoLists").child(list_name).update({"message_id": message_id})
-
-
-def get_all_list_names_by_user(author_id):
-    return db.child("members").child(author_id).get().val()
-
-
-def update_list(list_name, the_list):
-    return db.child("todoLists").child(list_name).update(the_list)
-    
 # Setup Stuff
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -152,6 +94,7 @@ def make_completed_list(the_list):
 async def add_emojis(the_message, the_list):
     for index, items in enumerate(the_list):
         await the_message.add_reaction(emojis[index])
+
 
 # -----Commands-----
 
