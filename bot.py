@@ -3,9 +3,6 @@ import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from todo_list import *
-
-<<<<<<< Updated upstream
-=======
 import pyrebase
 
 load_dotenv()
@@ -67,7 +64,6 @@ def update_list(list_name, the_list):
     return db.child("todoLists").child(list_name).update(the_list)
 
 
->>>>>>> Stashed changes
 # Setup Stuff
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -98,46 +94,29 @@ async def add_emojis(the_message, the_list):
         await the_message.add_reaction(emojis[index])
 
 
-def get_list_by_name(list_name):
-    for some_list in all_lists:
-        if some_list.get_todo_list_name() == list_name:
-            return some_list
-    return None
-
-
-def get_list_by_message_id(message_id):
-    for some_list in all_lists:
-        if some_list.get_message_id() == message_id:
-            return some_list
-    return None
-
-
-def get_user_lists(member_id):
-    output = []
-    for some_list in all_lists:
-        if some_list.is_user_member(member_id):
-            output.append(some_list)
-    return output
-
-
 # -----Commands-----
 
 # Create new list
 @bot.command(name="makelist", help="Make a new ToDo list")
 async def make_new_list(ctx: discord.ext.commands.Context, permission, *, list_name):
-    new_list = Todo_List(list_name, ctx.author.id)
-    if permission == all:
+    if not is_unique_list(list_name):
+        await ctx.send("List name already in use`")
+        return
+
+    new_list = create_list(list_name, ctx.author.id)
+    if permission == "all":
         for member in ctx.guild.members:
-            new_list.add_member(member.id)
-    all_lists.append(new_list)
+            new_list["members"].append(member.id)
+        update_list(list_name, new_list)
     await ctx.message.add_reaction('✅')
 
 
 # Show users lists
 @bot.command(name="mylists", help="Display ToDo lists for specific user")
 async def show_my_lists(ctx: discord.ext.commands.Context):
-    the_user = ctx.author.id
-    user_lists_names = [x.get_todo_list_name() for x in get_user_lists(the_user)]
+    print(ctx.author.id)
+    user_lists_names = get_all_list_names_by_user(ctx.author.id)
+    print(user_lists_names)
     if len(user_lists_names) > 0:
         await ctx.send("\n".join(user_lists_names))
     else:
@@ -148,34 +127,26 @@ async def show_my_lists(ctx: discord.ext.commands.Context):
 @bot.command(name="showlist", help="Display a ToDo list in chat")
 async def show_list(ctx: discord.ext.commands.Context, *, list_name):
     user_id = ctx.author.id
-    the_list = get_list_by_name(list_name)
+    list_name, the_list = get_list_by_name(list_name)
     if the_list is None:
         await ctx.send("⚠No list by that name ⚠")
         return
-<<<<<<< Updated upstream
-    if the_list.is_user_member(user_id):
-        output = make_output_list(the_list.get_todo_list(), the_list.get_todo_list_name())
-=======
     if user_id in the_list["members"]:  # if user_id in get_list_by_name("list_name")["members"]
         if "todoList" not in the_list:
             await ctx.send("Add some shit")
             return
 
         output = make_output_list(the_list["todoList"], list_name)
->>>>>>> Stashed changes
         the_message = await ctx.send("\n".join(output))
-        the_list.set_message_id(the_message.id)
-        await add_emojis(the_message, the_list.get_todo_list())
+        the_list["message_id"] = the_message.id
+        update_list(list_name, the_list)
+        await add_emojis(the_message, the_list["todoList"])
     else:
         await ctx.send("⛔You are not a member of this list.⛔")
 
 
 # Show list of Completed Items
 @bot.command(name="showcomplete", help="Display all completed items ")
-<<<<<<< Updated upstream
-async def show_complete(ctx: discord.ext.commands.Context):
-    output = make_output_list(test_data.get_completed(), test_data.get_todo_list_name(), "--Completed")
-=======
 async def show_complete(ctx: discord.ext.commands.Context, list_name):
     _list_name, the_list = get_list_by_name(list_name)
 
@@ -184,18 +155,21 @@ async def show_complete(ctx: discord.ext.commands.Context, list_name):
         return
 
     output = make_output_list(the_list["completed"], list_name, "--Completed")
->>>>>>> Stashed changes
     await ctx.send("\n".join(output))
 
 
 # Add item Command
 @bot.command(name="add", help="Add new item to list. Need quotes around list name")
 async def add_item(ctx: discord.ext.commands.Context, list_name, *, new_item):
-    the_list = get_list_by_name(list_name)
+    _list_name, the_list = get_list_by_name(list_name)
     if the_list is None:
         await ctx.send("⚠No list by that name ⚠")
         return
-    the_list.add_item(new_item)
+    if "todoList" not in the_list:
+        the_list["todoList"] = [new_item]
+    else:
+        the_list["todoList"].append(new_item)
+    update_list(list_name, the_list)
     await ctx.message.add_reaction('✅')
 
 
@@ -208,16 +182,33 @@ async def on_reaction_add(reaction: discord.Reaction, user: discord.Member):
         return
     if reaction.emoji not in emojis:
         return
-    the_list = get_list_by_message_id(reaction.message.id)
-    if not the_list.is_user_member(user.id):
+    list_name, the_list = get_list_by_message_id(reaction.message.id)
+    if user.id not in the_list["members"]:
+        return
+
+    if "todoList" not in the_list:
         return
 
     item_index = emojis.index(reaction.emoji)
-    the_list.complete_item(the_list.get_todo_list()[item_index])
-    output = make_output_list(the_list.get_todo_list(), the_list.get_todo_list_name())
+
+    if item_index >= len(the_list["todoList"]):
+        return
+    item_to_move = the_list["todoList"][item_index]
+    the_list["todoList"].remove(item_to_move)
+
+    if "completed" not in the_list:
+        the_list["completed"] = [item_to_move]
+    else:
+        the_list["completed"].append(item_to_move)
+
+    update_list(list_name, the_list)
+
+    todo_output = make_output_list(the_list["todoList"], list_name)
+    completed_output = make_output_list(the_list["completed"], list_name, "COMPLETE")
+    output = todo_output + completed_output
     await reaction.message.edit(content="\n".join(output))
     await reaction.message.clear_reactions()
-    await add_emojis(reaction.message, the_list.get_todo_list())
+    await add_emojis(reaction.message, the_list["todoList"])
 
 
 # Start Bot
