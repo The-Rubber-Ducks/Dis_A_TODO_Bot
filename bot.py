@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from discord.ext import commands
 from todo_list import *
+import pyrebase
 
 # Setup Stuff
 load_dotenv()
@@ -10,6 +11,22 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+config = {
+  "apiKey": os.getenv("FBASE_APIKEY"),
+  "databaseURL": os.getenv("FBASE_DATABASEURL"),
+  "authDomain": os.getenv("FBASE_AUTHDOMAIN"),
+  "projectId": os.getenv("FBASE_PROJECTID"),
+  "storageBucket": os.getenv("FBASE_STORAGEBUCKET"),
+  "messagingSenderId": os.getenv("FBASE_MESSAGINGSENDERID"),
+  "appId": os.getenv("FBASE_APPID"),
+  "measurementId": os.getenv("FBASE_MEASUREMENTID")
+}
+
+
+firebase = pyrebase.initialize_app(config)
+db = firebase.database()
+
 
 emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
 
