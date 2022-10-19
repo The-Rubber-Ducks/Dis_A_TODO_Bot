@@ -107,7 +107,7 @@ async def make_new_list(ctx: discord.ext.commands.Context, permission, *, list_n
         permission(String): The permission of the new list. 'all' = public
         list_name(String): The name of the new list
     """
-    check_quotations = {'"', "'"}
+    check_quotations = {'"', "'", u"\u2018", u"\u2019", u"\u201c", u"\u201d"}
     if list_name is None:
         list_name = permission
 
