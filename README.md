@@ -1,14 +1,21 @@
----
-title: 'Project documentation template'
-disqus: hackmd
----
-
 Dis A ToDo Bot
 ===
 
 ## Table of Contents
 
-[TOC]
+### Table of Contents
+**[Installation Guide](#installation-guide)**<br>
+**[Helpful Bot Commands](#helpful-bot-commands)**<br>
+**[User Stories](#user-stories)**<br>
+1. **[User wants to add a personal list](#feature-user-wants-to-add-a-personal-list)**<br>
+2. **[User wants to add a server-wide list](#feature-user-wants-to-add-a-server-wide-list)**<br>
+3. **[User wants to add an item to their ToDo list](#feature-user-wants-to-add-an-item-to-their-todo-list)**<br>
+4. **[User wants to see items on their ToDo list](#feature-user-wants-to-see-items-on-their-todo-list)**<br>
+5. **[User wants to view all their lists](#feature-user-wants-to-view-all-their-lists)**<br>
+6. **[User wants to delete a list](#feature-user-wants-to-delete-a-list)**<br>
+
+
+**[Appendix and FAQ](#appendix-and-faq)**<br>
 
 ## Installation Guide
 
@@ -131,4 +138,4 @@ If user clicks X emoji, the bot's message is removed.
 **Find this document incomplete?** Leave a comment!
 :::
 
-###### tags: `Templates` `Documentation`
+###### tags: `Templates` `Documentation` `Discord` `Bot` `Python` `Firebase`
